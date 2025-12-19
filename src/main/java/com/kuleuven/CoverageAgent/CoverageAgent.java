@@ -16,6 +16,9 @@ public class CoverageAgent {
         Map<String, String> options = parseArgs(args);
 
         String projectPrefix = options.get("projectPrefix");
+        String outputPath = options.getOrDefault("outputPath", "coverage.out");
+
+        CoverageRuntime.init(outputPath);
 
         inst.addTransformer(new ClassFileTransformer() {
             @Override

@@ -1,10 +1,24 @@
 package com.kuleuven.CoverageAgent;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
+import java.nio.file.Path;
 import java.util.BitSet;
 
 public final class CoverageRuntime {
 
     private static final BitSet blocks = new BitSet();
+    private static Path outputFile;
+
+    public static void init(@NotNull String outputPath) {
+        outputFile = Path.of(outputPath);
+
+        Runtime.getRuntime().addShutdownHook(
+                new Thread(CoverageRuntime::dump)
+        );
+    }
 
     public static void hit(int blockId) {
         blocks.set(blockId);
@@ -18,29 +32,15 @@ public final class CoverageRuntime {
         blocks.clear();
     }
 
-    private static void dump(String path) {
-        try {
-            saveToFile(path);
+    private static void dump() {
+        try (ObjectOutputStream oos =
+                     new ObjectOutputStream(new FileOutputStream(outputFile.toFile()))) {
+
+            oos.writeObject(blocks);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private static void saveToFile(String path) throws Exception {
-        java.nio.file.Files.createDirectories(
-                java.nio.file.Path.of(path).getParent()
-        );
-
-        StringBuilder sb = new StringBuilder();
-
-        for (int i = blocks.nextSetBit(0); i >= 0; i = blocks.nextSetBit(i + 1)) {
-            sb.append(i).append('\n');
-        }
-
-        java.nio.file.Files.writeString(
-                java.nio.file.Path.of(path),
-                sb.toString()
-        );
     }
 }
 
