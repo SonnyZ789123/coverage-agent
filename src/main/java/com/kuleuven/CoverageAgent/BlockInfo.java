@@ -1,4 +1,4 @@
-package com.kuleuven;
+package com.kuleuven.CoverageAgent;
 
 // Should match the representation that is used in ASM instrumentation
 public record BlockInfo(

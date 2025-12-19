@@ -1,4 +1,4 @@
-package com.kuleuven;
+package com.kuleuven.CoverageAgent;
 
 import java.util.BitSet;
 

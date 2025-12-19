@@ -1,5 +1,6 @@
-package com.kuleuven;
+package com.kuleuven.CoverageAgent;
 
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -7,9 +8,15 @@ import org.objectweb.asm.ClassWriter;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
+import java.util.HashMap;
+import java.util.Map;
 
 public class CoverageAgent {
     public static void premain(String args, Instrumentation inst) {
+        Map<String, String> options = parseArgs(args);
+
+        String projectPrefix = options.get("projectPrefix");
+
         inst.addTransformer(new ClassFileTransformer() {
             @Override
             public byte[] transform(
@@ -19,7 +26,7 @@ public class CoverageAgent {
                     ProtectionDomain domain,
                     byte[] bytes) {
 
-                if (!shouldInstrument(name)) return bytes;
+                if (!shouldInstrument(name, projectPrefix)) return bytes;
 
                 ClassReader cr = new ClassReader(bytes);
                 ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_FRAMES);
@@ -33,7 +40,7 @@ public class CoverageAgent {
 
     }
 
-    private static boolean shouldInstrument(String internalClassName) {
+    private static boolean shouldInstrument(String internalClassName, @Nullable String projectPrefix) {
         if (internalClassName == null) {
             return false;
         }
@@ -52,11 +59,33 @@ public class CoverageAgent {
             return false;
         }
 
-        // Never instrument your agent / runtime itself
-        if (internalClassName.startsWith("com/kuleuven/coverage/")) {
+        // Never instrument coverage tracking classes
+        if (internalClassName.startsWith("com/kuleuven/CoverageAgent/")) {
             return false;
         }
 
-        return internalClassName.startsWith("com/kuleuven/_examples/");
+        if (projectPrefix != null && !projectPrefix.isEmpty()) {
+            String safeProjectPrefix = projectPrefix.replace('.', '/');
+            return internalClassName.startsWith(safeProjectPrefix);
+        }
+
+        return true;
     }
+
+    private static Map<String, String> parseArgs(String args) {
+        Map<String, String> map = new HashMap<>();
+
+        if (args == null || args.isEmpty()) {
+            return map;
+        }
+
+        for (String part : args.split(",")) {
+            String[] kv = part.split("=", 2);
+            if (kv.length == 2) {
+                map.put(kv[0], kv[1]);
+            }
+        }
+        return map;
+    }
+
 }

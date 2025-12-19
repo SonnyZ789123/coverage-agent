@@ -1,4 +1,4 @@
-package com.kuleuven;
+package com.kuleuven.CoverageAgent;
 
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;

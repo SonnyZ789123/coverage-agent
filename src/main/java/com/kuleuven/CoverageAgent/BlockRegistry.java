@@ -1,4 +1,4 @@
-package com.kuleuven;
+package com.kuleuven.CoverageAgent;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;

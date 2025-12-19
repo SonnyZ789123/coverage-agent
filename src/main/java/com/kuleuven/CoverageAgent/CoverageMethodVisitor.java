@@ -1,4 +1,4 @@
-package com.kuleuven;
+package com.kuleuven.CoverageAgent;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -56,7 +56,7 @@ class CoverageMethodVisitor extends MethodVisitor {
         mv.visitLdcInsn(blockId);
         mv.visitMethodInsn(
                 Opcodes.INVOKESTATIC,
-                "com/kuleuven/CoverageRuntime",
+                "com/kuleuven/CoverageAgent/CoverageRuntime",
                 "hit",
                 "(I)V",
                 false

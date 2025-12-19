@@ -24,7 +24,7 @@
                     <archive>
                         <manifestEntries>
                             <Premain-Class>
-                                com.kuleuven.CoverageAgent
+                                com.kuleuven.CoverageAgent.CoverageAgent
                             </Premain-Class>
                             <Can-Redefine-Classes>true</Can-Redefine-Classes>
                         </manifestEntries>
@@ -66,6 +66,12 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.13.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>13.0</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 
