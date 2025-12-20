@@ -6,17 +6,25 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public final class BlockRegistry {
+    private record MethodScope(
+            String className,
+            String methodName,
+            String methodDescriptor
+    ) {}
+
     private static Map<Integer, BlockInfo> blockInfoMap;
 
-    private static final Map<String, Integer> LINE_LOOKUP = new HashMap<>();
+    private static final Map<String, Integer> lineLookup = new HashMap<>();
+
+    private static final Set<MethodScope> SUTScope = new HashSet<>();
 
     public static void init(@NotNull String blockMapPath) {
         load(blockMapPath);
         buildLineLookup();
+        buildSUTScope();
     }
 
     private static void load(@NotNull String blockMapPath) {
@@ -47,8 +55,32 @@ public final class BlockRegistry {
                     info.methodDescriptor(),
                     info.lineNumber());
 
-            LINE_LOOKUP.put(key, e.getKey());
+            lineLookup.put(key, e.getKey());
         }
+    }
+
+    private static void buildSUTScope() {
+        for (BlockInfo info : blockInfoMap.values()) {
+            MethodScope scope = new MethodScope(
+                    info.className(),
+                    info.methodName(),
+                    info.methodDescriptor()
+            );
+            SUTScope.add(scope);
+        }
+    }
+
+    public static boolean isInSUTScope(
+            String className,
+            String methodName,
+            String methodDescriptor
+    ) {
+        MethodScope scope = new MethodScope(
+                className,
+                methodName,
+                methodDescriptor
+        );
+        return SUTScope.contains(scope);
     }
 
     public static String createKey(
@@ -70,7 +102,7 @@ public final class BlockRegistry {
             int lineNumber
     ) {
         String key = createKey(className, methodName, methodDescriptor, lineNumber);
-        return LINE_LOOKUP.get(key);
+        return lineLookup.get(key);
     }
 
     public static Map<Integer, BlockInfo> getBlocks() {
