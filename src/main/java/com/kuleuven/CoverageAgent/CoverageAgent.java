@@ -60,7 +60,8 @@ public class CoverageAgent {
 
         // Never instrument ASM or other libraries
         if (internalClassName.startsWith("org/objectweb/asm/") ||
-                internalClassName.startsWith("com/google/gson/")) {
+                internalClassName.startsWith("com/google/gson/") ||
+                internalClassName.startsWith("it/unimi/dsi/")) {
             return false;
         }
 
