@@ -1,6 +1,6 @@
 package com.kuleuven.CoverageAgent;
 
-// Should match the representation that is used in ASM instrumentation
+// Should match the BlockInfo of the call-graph-generator
 public record BlockInfo(
         String className,
         String methodName,
