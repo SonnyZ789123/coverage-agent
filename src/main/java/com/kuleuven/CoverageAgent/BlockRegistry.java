@@ -2,6 +2,7 @@ package com.kuleuven.CoverageAgent;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
@@ -9,18 +10,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class BlockRegistry {
-    private static final String CFG_BLOCK_MAPPING_FILE_PATH = "./out/cfg_block_mapping.json";
-
-    private static Map<Integer, BlockInfo> BLOCKS;
+    private static Map<Integer, BlockInfo> blockInfoMap;
 
     private static final Map<String, Integer> LINE_LOOKUP = new HashMap<>();
 
-    static {
-        load();
+    public static void init(@NotNull String blockMapPath) {
+        load(blockMapPath);
         buildLineLookup();
     }
 
-    private static void load() {
+    private static void load(@NotNull String blockMapPath) {
         try {
             Gson gson = new Gson();
             Type type = new TypeToken<Map<Integer, BlockInfo>>() {
@@ -29,18 +28,18 @@ public final class BlockRegistry {
             try (InputStreamReader reader =
                          new InputStreamReader(
                                  java.nio.file.Files.newInputStream(
-                                         java.nio.file.Path.of(CFG_BLOCK_MAPPING_FILE_PATH)))) {
+                                         java.nio.file.Path.of(blockMapPath)))) {
 
-                BLOCKS = gson.fromJson(reader, type);
+                blockInfoMap = gson.fromJson(reader, type);
             }
         } catch (Exception e) {
-            System.err.printf("Failed to load JSON from path %s", CFG_BLOCK_MAPPING_FILE_PATH);
+            System.err.printf("Failed to load JSON from path %s", blockMapPath);
             throw new RuntimeException(e);
         }
     }
 
     private static void buildLineLookup() {
-        for (Map.Entry<Integer, BlockInfo> e : BLOCKS.entrySet()) {
+        for (Map.Entry<Integer, BlockInfo> e : blockInfoMap.entrySet()) {
             BlockInfo info = e.getValue();
             String key = createKey(
                     info.className(),
@@ -75,7 +74,7 @@ public final class BlockRegistry {
     }
 
     public static Map<Integer, BlockInfo> getBlocks() {
-        return BLOCKS;
+        return blockInfoMap;
     }
 
     private BlockRegistry() {}

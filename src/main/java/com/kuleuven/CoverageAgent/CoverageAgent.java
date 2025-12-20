@@ -17,8 +17,10 @@ public class CoverageAgent {
 
         String projectPrefix = options.get("projectPrefix");
         String outputPath = options.getOrDefault("outputPath", "coverage.out");
+        String blockMapPath = options.get("blockMapPath");
 
         CoverageRuntime.init(outputPath);
+        BlockRegistry.init(blockMapPath);
 
         inst.addTransformer(new ClassFileTransformer() {
             @Override
