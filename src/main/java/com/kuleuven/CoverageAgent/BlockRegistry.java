@@ -2,6 +2,7 @@ package com.kuleuven.CoverageAgent;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.kuleuven.CoverageAgent.shared.BlockInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStreamReader;
@@ -20,6 +21,7 @@ public final class BlockRegistry {
     private static final Map<String, Integer> lineLookup = new HashMap<>();
 
     private static final Set<MethodScope> SUTScope = new HashSet<>();
+    private static final Set<String> SUTClassesCache = new HashSet<>();
 
     public static void init(@NotNull String blockMapPath) {
         load(blockMapPath);
@@ -68,6 +70,7 @@ public final class BlockRegistry {
             );
             SUTScope.add(scope);
         }
+        buildSUTClassesCache();
     }
 
     public static boolean isInSUTScope(
@@ -75,12 +78,25 @@ public final class BlockRegistry {
             String methodName,
             String methodDescriptor
     ) {
+        if (!isInSUTScope(className)) {
+            return false;
+        }
         MethodScope scope = new MethodScope(
                 className,
                 methodName,
                 methodDescriptor
         );
         return SUTScope.contains(scope);
+    }
+
+    private static void buildSUTClassesCache() {
+        for (MethodScope scope : SUTScope) {
+            SUTClassesCache.add(scope.className);
+        }
+    }
+
+    public static boolean isInSUTScope(String className) {
+        return SUTClassesCache.contains(className);
     }
 
     public static String createKey(

@@ -1,6 +1,6 @@
-package com.kuleuven.CoverageAgent;
+package com.kuleuven.CoverageAgent.shared;
 
-// Should match the BlockInfo of the call-graph-generator
+// Should match the BlockInfo of the pathcov
 public record BlockInfo(
         int blockId,
         String className,

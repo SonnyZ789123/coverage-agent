@@ -72,10 +72,12 @@ public class CoverageAgent {
 
         if (projectPrefix != null && !projectPrefix.isEmpty()) {
             String safeProjectPrefix = projectPrefix.replace('.', '/');
-            return internalClassName.startsWith(safeProjectPrefix);
+            if (!internalClassName.startsWith(safeProjectPrefix)) {
+                return false;
+            }
         }
 
-        return true;
+        return BlockRegistry.isInSUTScope(internalClassName.replace('/', '.'));
     }
 
     private static Map<String, String> parseArgs(String args) {
