@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,6 +33,7 @@ public final class CoverageRuntime {
         try (ObjectOutputStream oos =
                      new ObjectOutputStream(new FileOutputStream(outputFile.toFile()))) {
 
+            Files.createDirectories(outputFile.getParent());
             oos.writeObject(executionPaths);
 
         } catch (Exception e) {
