@@ -16,7 +16,7 @@ public class CoverageAgent {
         Map<String, String> options = parseArgs(args);
 
         String projectPrefix = options.get("projectPrefix");
-        String outputPath = options.getOrDefault("outputPath", "out/coverage.out");
+        String outputPath = options.getOrDefault("outputPath", "out/coverage_paths.json");
         String blockMapPath = options.get("blockMapPath");
 
         CoverageRuntime.init(outputPath);
