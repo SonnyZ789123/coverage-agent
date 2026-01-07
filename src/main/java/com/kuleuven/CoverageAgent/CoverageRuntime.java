@@ -10,25 +10,24 @@ import org.jetbrains.annotations.NotNull;
 import java.io.BufferedWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public final class CoverageRuntime {
+    private static final class Frame {
+        final String methodId;
+        final IntArrayList insns = new IntArrayList();
+        final IntArrayList blocks = new IntArrayList();
+
+        Frame(String methodId) {
+            this.methodId = methodId;
+        }
+    }
+
     private static final List<CoveragePath> paths =
             Collections.synchronizedList(new ArrayList<>());
 
-    /** Current execution path of instruction indexes (per invocation) */
-    private static final ThreadLocal<IntArrayList> currentInstructionPath =
-            ThreadLocal.withInitial(IntArrayList::new);
-
-    /** Current execution path of instruction indexes (per invocation) */
-    private static final ThreadLocal<IntArrayList> currentBlockPath =
-            ThreadLocal.withInitial(IntArrayList::new);
-
-    /** Method that started the current path */
-    private static final ThreadLocal<String> currentMethodFullName =
-            new ThreadLocal<>();
+    private static final ThreadLocal<Deque<Frame>> stack =
+            ThreadLocal.withInitial(ArrayDeque::new);
 
     private static final Gson GSON = new GsonBuilder()
             .setPrettyPrinting()   // remove if you want compact output
@@ -62,30 +61,32 @@ public final class CoverageRuntime {
     }
 
     public static void hitInstruction(int insnIdx) {
-        currentInstructionPath.get().add(insnIdx);
+        Frame f = stack.get().peek();
+        if (f != null) {
+            f.insns.add(insnIdx);
+        }
     }
 
     public static void hitBlock(int blockId) {
-        currentBlockPath.get().add(blockId);
+        Frame f = stack.get().peek();
+        if (f != null) {
+            f.blocks.add(blockId);
+        }
     }
 
-    public static void startPath(@NotNull String methodId) {
-        currentMethodFullName.set(methodId);
-
-        currentInstructionPath.get().clear();
-        currentBlockPath.get().clear();
+    public static void startPath(String methodFullName) {
+        stack.get().push(new Frame(methodFullName));
     }
-
 
     public static void endPath() {
-        int[] instructionPath = currentInstructionPath.get().toIntArray();
-        int[] blockPath = currentBlockPath.get().toIntArray();
+        Frame f = stack.get().poll();
+        if (f == null) return;
 
-        paths.add(new CoveragePath(currentMethodFullName.get(), instructionPath, blockPath));
-
-        currentInstructionPath.get().clear();
-        currentBlockPath.get().clear();
-        currentMethodFullName.remove();
+        paths.add(new CoveragePath(
+                f.methodId,
+                f.insns.toIntArray(),
+                f.blocks.toIntArray()
+        ));
     }
 
 }
