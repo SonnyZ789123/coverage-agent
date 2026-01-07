@@ -26,6 +26,10 @@ public final class CoverageRuntime {
     private static final ThreadLocal<IntArrayList> currentBlockPath =
             ThreadLocal.withInitial(IntArrayList::new);
 
+    /** Method that started the current path */
+    private static final ThreadLocal<String> currentMethodFullName =
+            new ThreadLocal<>();
+
     private static final Gson GSON = new GsonBuilder()
             .setPrettyPrinting()   // remove if you want compact output
             .create();
@@ -65,20 +69,23 @@ public final class CoverageRuntime {
         currentBlockPath.get().add(blockId);
     }
 
-    public static void startPath() {
-        currentInstructionPath.get().clear();
+    public static void startPath(@NotNull String methodId) {
+        currentMethodFullName.set(methodId);
 
+        currentInstructionPath.get().clear();
         currentBlockPath.get().clear();
     }
+
 
     public static void endPath() {
         int[] instructionPath = currentInstructionPath.get().toIntArray();
         int[] blockPath = currentBlockPath.get().toIntArray();
 
-        paths.add(new CoveragePath(instructionPath, blockPath));
+        paths.add(new CoveragePath(currentMethodFullName.get(), instructionPath, blockPath));
 
         currentInstructionPath.get().clear();
         currentBlockPath.get().clear();
+        currentMethodFullName.remove();
     }
 
 }

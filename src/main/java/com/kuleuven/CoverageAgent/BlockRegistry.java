@@ -121,6 +121,14 @@ public final class BlockRegistry {
         return lineLookup.get(key);
     }
 
+    public static String asAsmMethodFullName(
+            String className,
+            String methodName,
+            String methodDescriptor
+    ) {
+        return className + "." + methodName + methodDescriptor;
+    }
+
     public static Map<Integer, BlockInfo> getBlocks() {
         return blockInfoMap;
     }

@@ -10,6 +10,7 @@ class CoverageMethodVisitor extends MethodVisitor {
     private final String className;
     private final String methodName;
     private final String desc;
+    private final String methodFullName;
     private final boolean isSUTMethod;
     private int insnIdx = 0;
 
@@ -18,6 +19,7 @@ class CoverageMethodVisitor extends MethodVisitor {
         this.className = cls;
         this.methodName = m;
         this.desc = d;
+        this.methodFullName = BlockRegistry.asAsmMethodFullName(className, methodName, desc);
         this.isSUTMethod = BlockRegistry.isInSUTScope(className, methodName, desc);
     }
 
@@ -65,11 +67,12 @@ class CoverageMethodVisitor extends MethodVisitor {
     @Override
     public void visitCode() {
         if (isSUTMethod) {
+            mv.visitLdcInsn(methodFullName);
             mv.visitMethodInsn(
                     Opcodes.INVOKESTATIC,
                     "com/kuleuven/CoverageAgent/CoverageRuntime",
                     "startPath",
-                    "()V",
+                    "(Ljava/lang/String;)V",
                     false
             );
         }
