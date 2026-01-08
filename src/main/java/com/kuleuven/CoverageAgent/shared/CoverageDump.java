@@ -4,10 +4,10 @@ import java.util.List;
 
 public final class CoverageDump {
     public final int version;
-    public final List<CoveragePath> paths;
+    public final List<ExecutionCoveragePath> executionPaths;
 
-    public CoverageDump(int version, List<CoveragePath> paths) {
+    public CoverageDump(int version, List<ExecutionCoveragePath> executionPaths) {
         this.version = version;
-        this.paths = paths;
+        this.executionPaths = executionPaths;
     }
 }

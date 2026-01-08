@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.kuleuven.CoverageAgent.shared.CoverageDump;
 import com.kuleuven.CoverageAgent.shared.CoveragePath;
+import com.kuleuven.CoverageAgent.shared.ExecutionCoveragePath;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,15 +24,19 @@ public final class CoverageRuntime {
         }
     }
 
-    private static final List<CoveragePath> paths =
+    // Multiple test threads may finish execution concurrently
+    private static final List<ExecutionCoveragePath> executionPaths =
             Collections.synchronizedList(new ArrayList<>());
+
+    // INVARIANT:
+    // For each thread: one call stack → one subpath list → one execution path
+    private static final ThreadLocal<List<CoveragePath>> paths =
+            ThreadLocal.withInitial(ArrayList::new);
 
     private static final ThreadLocal<Deque<Frame>> stack =
             ThreadLocal.withInitial(ArrayDeque::new);
 
-    private static final Gson GSON = new GsonBuilder()
-            .setPrettyPrinting()   // remove if you want compact output
-            .create();
+    private static final Gson GSON = new GsonBuilder().create();
 
     private static Path outputFile;
 
@@ -49,7 +54,7 @@ public final class CoverageRuntime {
 
             CoverageDump dump = new CoverageDump(
                     1,
-                    List.copyOf(paths)
+                    List.copyOf(executionPaths)
             );
 
             try (BufferedWriter writer = Files.newBufferedWriter(outputFile)) {
@@ -79,14 +84,26 @@ public final class CoverageRuntime {
     }
 
     public static void endPath() {
-        Frame f = stack.get().poll();
-        if (f == null) return;
+        try {
+            Frame f = stack.get().pop();
 
-        paths.add(new CoveragePath(
-                f.methodId,
-                f.insns.toIntArray(),
-                f.blocks.toIntArray()
-        ));
+            paths.get().add(new CoveragePath(
+                    f.methodId,
+                    f.insns.toIntArray(),
+                    f.blocks.toIntArray()
+            ));
+
+            // If the stack is empty, we completed a full execution path of an entry method.
+            if (stack.get().isEmpty()) {
+                executionPaths.add(new ExecutionCoveragePath(
+                        f.methodId,
+                        List.copyOf(paths.get())
+                ));
+                paths.get().clear();
+            }
+        } catch (NoSuchElementException e) {
+            throw new IllegalStateException("Mismatched startPath/endPath calls", e);
+        }
     }
 
 }
