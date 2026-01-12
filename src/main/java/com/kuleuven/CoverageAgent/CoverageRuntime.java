@@ -6,6 +6,7 @@ import com.kuleuven.CoverageAgent.shared.CoverageDump;
 import com.kuleuven.CoverageAgent.shared.CoveragePath;
 import com.kuleuven.CoverageAgent.shared.ExecutionCoveragePath;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedWriter;
@@ -72,10 +73,10 @@ public final class CoverageRuntime {
         }
     }
 
-    public static void hitBlock(int blockId) {
+    public static void hitBlocks(int[] blockIds) {
         Frame f = stack.get().peek();
         if (f != null) {
-            f.blocks.add(blockId);
+            f.blocks.addAll(IntList.of(blockIds));
         }
     }
 

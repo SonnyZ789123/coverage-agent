@@ -5,6 +5,8 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.util.Set;
+
 class CoverageMethodVisitor extends MethodVisitor {
 
     private final String className;
@@ -37,28 +39,43 @@ class CoverageMethodVisitor extends MethodVisitor {
         insnIdx++;
     }
 
-    private void injectBlockHit(int blockId) {
-        mv.visitLdcInsn(blockId);
+    private void injectBlockHit(Set<Integer> blockIds) {
+        int size = blockIds.size();
+
+        // Create int[] of blockIds to pass
+        mv.visitLdcInsn(size);
+        mv.visitIntInsn(Opcodes.NEWARRAY, Opcodes.T_INT);
+
+        int index = 0;
+        for (int blockId : blockIds) {
+            mv.visitInsn(Opcodes.DUP);      // duplicate array reference
+            mv.visitLdcInsn(index);         // array index
+            mv.visitLdcInsn(blockId);       // value
+            mv.visitInsn(Opcodes.IASTORE);  // arr[index] = blockId
+            index++;
+        }
+
         mv.visitMethodInsn(
                 Opcodes.INVOKESTATIC,
                 "com/kuleuven/CoverageAgent/CoverageRuntime",
-                "hitBlock",
-                "(I)V",
+                "hitBlocks",
+                "([I)V",
                 false
         );
     }
 
+
     @Override
     public void visitLineNumber(int line, Label start) {
-        Integer blockId = BlockRegistry.lookupByLine(
+        Set<Integer> blockIds = BlockRegistry.lookupByLine(
                 className,
                 methodName,
                 desc,
                 line
         );
 
-        if (blockId != null) {
-            injectBlockHit(blockId);
+        if (blockIds != null && !blockIds.isEmpty()) {
+            injectBlockHit(blockIds);
         }
 
         super.visitLineNumber(line, start);

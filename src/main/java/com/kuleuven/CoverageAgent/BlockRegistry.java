@@ -18,7 +18,7 @@ public final class BlockRegistry {
 
     private static Map<Integer, BlockInfo> blockInfoMap;
 
-    private static final Map<String, Integer> lineLookup = new HashMap<>();
+    private static final Map<String, Set<Integer>> lineLookup = new HashMap<>();
 
     private static final Set<MethodScope> SUTScope = new HashSet<>();
     private static final Set<String> SUTClassesCache = new HashSet<>();
@@ -51,13 +51,21 @@ public final class BlockRegistry {
     private static void buildLineLookup() {
         for (Map.Entry<Integer, BlockInfo> e : blockInfoMap.entrySet()) {
             BlockInfo info = e.getValue();
+
             String key = createKey(
                     info.className(),
                     info.methodName(),
                     info.methodDescriptor(),
-                    info.lineNumber());
+                    info.lineNumber()
+            );
 
-            lineLookup.put(key, e.getKey());
+            lineLookup.compute(key, (k, v) -> {
+                if (v == null) {
+                    v = new HashSet<>();
+                }
+                v.add(e.getKey());
+                return v;
+            });
         }
     }
 
@@ -111,7 +119,7 @@ public final class BlockRegistry {
                 lineNumber;
     }
 
-    public static Integer lookupByLine(
+    public static Set<Integer> lookupByLine(
             String className,
             String methodName,
             String methodDescriptor,
