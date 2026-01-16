@@ -15,6 +15,9 @@ class CoverageMethodVisitor extends MethodVisitor {
     private final String methodFullName;
     private final boolean isSUTMethod;
     private int insnIdx = 0;
+    private final Label startLabel = new Label();
+    private final Label endLabel = new Label();
+    private final Label handlerLabel = new Label();
 
     CoverageMethodVisitor(MethodVisitor mv, String cls, String m, String d) {
         super(Opcodes.ASM9, mv);
@@ -83,6 +86,8 @@ class CoverageMethodVisitor extends MethodVisitor {
 
     @Override
     public void visitCode() {
+        mv.visitLabel(startLabel);
+
         if (isSUTMethod) {
             mv.visitLdcInsn(methodFullName);
             mv.visitMethodInsn(
@@ -126,6 +131,42 @@ class CoverageMethodVisitor extends MethodVisitor {
 
         super.visitInsn(opcode);
     }
+
+    /*
+    We add a method-wide catch(Throwable) to ensure endPath() is executed for all exit paths of the method, including
+    uncaught exceptions that propagate to callers. Without this handler, methods that terminate due to exception
+    unwinding would never trigger ATHROW in the caller, causing path leaks.
+     */
+    @Override
+    public void visitMaxs(int maxStack, int maxLocals) {
+        mv.visitLabel(endLabel);
+
+        // register try-catch AFTER labels exist
+        if (isSUTMethod) {
+            mv.visitTryCatchBlock(
+                    startLabel,
+                    endLabel,
+                    handlerLabel,
+                    "java/lang/Throwable"
+            );
+
+            mv.visitLabel(handlerLabel);
+
+            // exception is on stack
+            mv.visitMethodInsn(
+                    Opcodes.INVOKESTATIC,
+                    "com/kuleuven/CoverageAgent/CoverageRuntime",
+                    "endPath",
+                    "()V",
+                    false
+            );
+
+            mv.visitInsn(Opcodes.ATHROW);
+        }
+
+        super.visitMaxs(maxStack, maxLocals);
+    }
+
 
     @Override
     public void visitVarInsn(int opcode, int var) {
