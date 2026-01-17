@@ -25,7 +25,11 @@ class CoverageMethodVisitor extends MethodVisitor {
         this.methodName = m;
         this.desc = d;
         this.methodFullName = BlockRegistry.asAsmMethodFullName(className, methodName, desc);
-        this.isSUTMethod = BlockRegistry.isInSUTScope(className, methodName, desc);
+        boolean isConstructor =
+                methodName.equals("<init>") || methodName.equals("<clinit>");
+        this.isSUTMethod =
+                BlockRegistry.isInSUTScope(className, methodName, desc)
+                        && !isConstructor;
     }
 
     private void injectHit() {
@@ -116,9 +120,7 @@ class CoverageMethodVisitor extends MethodVisitor {
             ARETURN = 176
             RETURN  = 177
             */
-            if ((opcode >= Opcodes.IRETURN && opcode <= Opcodes.RETURN)
-                    || opcode == Opcodes.ATHROW) {
-
+            if ((opcode >= Opcodes.IRETURN && opcode <= Opcodes.RETURN)) {
                 mv.visitMethodInsn(
                         Opcodes.INVOKESTATIC,
                         "com/kuleuven/CoverageAgent/CoverageRuntime",
